@@ -12,15 +12,32 @@ class NeuralNetLearner(BaseLearner):
 
         prev_layer_num_nodes_plus_bias = self.config.num_inputs + 1
         for num_nodes_hidden_layer in self.config.num_nodes_hidden_layers:
+            # hidden_layer_theta_matrix = \
+            #     np.random.rand(num_nodes_hidden_layer, prev_layer_num_nodes_plus_bias)
             hidden_layer_theta_matrix = \
-                np.random.rand(num_nodes_hidden_layer, prev_layer_num_nodes_plus_bias)
+                np.random.uniform(-1.0, 1.0, size=(num_nodes_hidden_layer, prev_layer_num_nodes_plus_bias))
             self.theta.append(hidden_layer_theta_matrix)
             prev_layer_num_nodes_plus_bias = num_nodes_hidden_layer + 1
 
-        output_theta_matrix = np.random.rand(self.config.num_outputs, prev_layer_num_nodes_plus_bias)
+        #output_theta_matrix = np.random.rand(self.config.num_outputs, prev_layer_num_nodes_plus_bias)
+        output_theta_matrix = np.random.uniform(-1.0, 1.0, size=(self.config.num_outputs, prev_layer_num_nodes_plus_bias))
         self.theta.append(output_theta_matrix)
 
         print('init complete')
+
+    def forward_prop(self, feature_record):
+
+        activations_per_layer = []
+        current_activation = feature_record
+        for theta_matrix in self.theta:
+            current_activation = np.insert(current_activation, 0, 1)
+            z_vector = np.dot(theta_matrix, current_activation)
+            activation_vector = 1.0/(1.0 + np.exp(-z_vector))
+            activations_per_layer.append(activation_vector)
+            current_activation = activation_vector
+
+        return activations_per_layer
+
 
     def predict(self, feature_data):
 
@@ -35,21 +52,27 @@ class NeuralNetLearner(BaseLearner):
 
     def train(self, feature_data, labels):
 
-        for i in range(4000):
-            predictions = self.predict(feature_data)
-            current_cost = self.calculate_cost(predictions, labels)
-            # print('current cost: ', current_cost)
-            self.cost_history.append(current_cost)
-            self.theta_history.append(self.theta)
-            self.update_theta_gradient_descent(predictions, feature_data, labels)
+        count = 1
+        for feature_record in feature_data:
+            activations_per_layer = self.forward_prop(feature_record)
+            print(count)
+            count += 1
 
-        min_cost_index = np.argmin(self.cost_history)
-        self.theta = self.theta_history[min_cost_index]
-
-        print('min_cost_index: ', min_cost_index)
-        # print('min_cost_theta: ', self.theta)
-
-        self.cost_history = self.cost_history[:min_cost_index + 1]
+        # for i in range(4000):
+        #     predictions = self.predict(feature_data)
+        #     current_cost = self.calculate_cost(predictions, labels)
+        #     # print('current cost: ', current_cost)
+        #     self.cost_history.append(current_cost)
+        #     self.theta_history.append(self.theta)
+        #     self.update_theta_gradient_descent(predictions, feature_data, labels)
+        #
+        # min_cost_index = np.argmin(self.cost_history)
+        # self.theta = self.theta_history[min_cost_index]
+        #
+        # print('min_cost_index: ', min_cost_index)
+        # # print('min_cost_theta: ', self.theta)
+        #
+        # self.cost_history = self.cost_history[:min_cost_index + 1]
 
     def update_theta_gradient_descent(self, predictions, feature_data, labels):
 
