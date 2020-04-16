@@ -20,20 +20,18 @@ class Runner:
         labels = data[:, 1]
 
         config = NeuralNetConfig(num_inputs=feature_data.shape[1], num_nodes_hidden_layers=[8, 4],
-                                 num_outputs=1)
+                                 num_outputs=1, learning_rate=0.01)
 
         self.neural_net_learner = NeuralNetLearner(config)
 
         normalized_data = DataService.normalize(data, method='z')
         normalized_feature_data = normalized_data[:, 2:]
 
-        self.neural_net_learner.forward_prop(normalized_feature_data[0, :])
-
         self.train_with_gradient_descent(data, labels, normalized_feature_data, labels)
 
     def train_with_gradient_descent(self, data, labels_data, normalized_feature_data, normalized_labels):
 
-        self.neural_net_learner.train(normalized_feature_data, normalized_labels)
+        self.neural_net_learner.train(normalized_feature_data, labels_data)
 
         # predictions = self.neural_net_learner.predict(normalized_feature_data)
         # rounded_predictions = np.rint(predictions)
