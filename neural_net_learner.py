@@ -7,14 +7,13 @@ class NeuralNetLearner(BaseLearner):
     def __init__(self, neural_net_config):
         self.config = neural_net_config
         self.cost_history = []
-        self.theta_history = []
+        self.cost_history = []
+        self.accuracy_history = []
         self.theta = []
         self.gradient_accumulator = []
 
         prev_layer_num_nodes_plus_bias = self.config.num_inputs + 1
         for num_nodes_hidden_layer in self.config.num_nodes_hidden_layers:
-            # hidden_layer_theta_matrix = \
-            #     np.random.rand(num_nodes_hidden_layer, prev_layer_num_nodes_plus_bias)
             hidden_layer_theta_matrix = \
                 np.random.uniform(-1.0, 1.0, size=(num_nodes_hidden_layer, prev_layer_num_nodes_plus_bias))
             self.theta.append(hidden_layer_theta_matrix)
@@ -23,14 +22,11 @@ class NeuralNetLearner(BaseLearner):
 
             prev_layer_num_nodes_plus_bias = num_nodes_hidden_layer + 1
 
-        #output_theta_matrix = np.random.rand(self.config.num_outputs, prev_layer_num_nodes_plus_bias)
         output_theta_matrix = np.random.uniform(-1.0, 1.0,
                                                 size=(self.config.num_outputs, prev_layer_num_nodes_plus_bias))
         self.theta.append(output_theta_matrix)
         self.gradient_accumulator.append(
             np.zeros((self.config.num_outputs, prev_layer_num_nodes_plus_bias), np.float32))
-
-        print('init complete')
 
     def forward_prop(self, feature_record):
 
@@ -58,7 +54,6 @@ class NeuralNetLearner(BaseLearner):
         # add zero for the bias delta, just to make code less complicated
         delta_previous_layer = delta_output
         for layer_index in range(len(self.theta) - 1, 0, -1):
-            # print(layer_index)
             theta_transpose_this_layer = np.transpose(self.theta[layer_index])
             delta_previous_layer_no_bias = \
                 delta_previous_layer[1:, :] if delta_previous_layer.shape[0] > 1 else delta_previous_layer
@@ -75,8 +70,6 @@ class NeuralNetLearner(BaseLearner):
 
             deltas_per_layer.insert(0, delta_this_layer)
             delta_previous_layer = delta_this_layer
-            # print(delta_this_layer.shape)
-        # print(activations_per_layer[-1][0], label, delta_output)
 
         for index in range(len(self.gradient_accumulator)):
             delta = deltas_per_layer[index][1:, :]
@@ -93,26 +86,21 @@ class NeuralNetLearner(BaseLearner):
 
         return predictions
 
-    @staticmethod
-    def predict_for_theta(feature_data, theta):
-        pass
-
     def calculate_cost(self, predictions, labels):
         return np.sum(np.abs(np.array(predictions) - labels))
 
-    def calculate_rounded_cost(self, predictions, labels):
+    @staticmethod
+    def calculate_rounded_cost(predictions, labels):
         return np.sum(np.abs(np.rint(np.array(predictions)) - labels))
 
     def train(self, feature_data, labels):
 
         feature_data_with_bias = np.insert(feature_data, 0, 1, axis=1)
 
-        epochs = 500
-
         min_cost = 99999999999
         min_rounded_cost = min_cost
         best_theta = self.theta
-        for epoch_index in range(epochs):
+        for epoch_index in range(self.config.epochs):
 
             for index, feature_record in enumerate(feature_data_with_bias):
 
@@ -129,62 +117,22 @@ class NeuralNetLearner(BaseLearner):
             predictions = self.predict(feature_data_with_bias)
             cost = self.calculate_cost(predictions, labels)
             rounded_cost = self.calculate_rounded_cost(predictions, labels)
+            accuracy = (len(predictions) - rounded_cost) / len(predictions)
+            self.cost_history.append(cost)
+            self.accuracy_history.append(accuracy)
+            print("Epoch: ", epoch_index, "Cost: ", cost, "Rounded Cost: ", rounded_cost)
+
             if cost < min_cost:
-                #best_theta = np.copy(self.theta)
                 min_cost = cost
             if rounded_cost < min_rounded_cost:
                 min_rounded_cost = rounded_cost
                 best_theta = np.copy(self.theta)
 
-            self.cost_history.append(cost)
-            print("Epoch: ", epoch_index, "Cost: ", cost, "Rounded Cost: ", rounded_cost)
-
         print("Min Cost: ", cost, "Min Rounded Cost: ", min_rounded_cost)
         self.theta = best_theta
 
-        predictions = self.predict(feature_data_with_bias)
-        cost = self.calculate_cost(predictions, labels)
-        rounded_cost = self.calculate_rounded_cost(predictions, labels)
-        accuracy = 1 - np.sum(np.abs(np.rint(predictions) - labels)) / len(predictions)
+        min_cost_index = np.argmin(self.cost_history)
+        return self.cost_history[:min_cost_index + 1], self.accuracy_history[:min_cost_index + 1]
 
-        print("Accuracy:", accuracy, " Best Theta Cost: ", cost, " Best Theta Rounded Cost: ", rounded_cost)
-
-        print("Number of misclassified records: ", np.sum(np.abs(np.rint(predictions) - labels)))
-
-
-
-
-
-
-
-        # for i in range(4000):
-        #     predictions = self.predict(feature_data)
-        #     current_cost = self.calculate_cost(predictions, labels)
-        #     # print('current cost: ', current_cost)
-        #     self.cost_history.append(current_cost)
-        #     self.theta_history.append(self.theta)
-        #     self.update_theta_gradient_descent(predictions, feature_data, labels)
-        #
-        # min_cost_index = np.argmin(self.cost_history)
-        # self.theta = self.theta_history[min_cost_index]
-        #
-        # print('min_cost_index: ', min_cost_index)
-        # # print('min_cost_theta: ', self.theta)
-        #
-        # self.cost_history = self.cost_history[:min_cost_index + 1]
-
-    def update_theta_gradient_descent(self, predictions, feature_data, labels):
-
-        # predictions_minus_labels = np.transpose(predictions - labels)
-        #
-        # predictions_minus_labels = predictions_minus_labels.reshape(predictions_minus_labels.shape[0], 1)
-        #
-        # gradient = np.mean(predictions_minus_labels * feature_data, axis=0)
-        # #add 1 for the bias
-        # gradient = np.concatenate(([1], gradient))
-        #
-        # self.theta = self.theta - self.learning_rate * gradient
-
-        pass
 
 
