@@ -19,8 +19,8 @@ class Runner:
         feature_data = data[:, 2:]
         labels = data[:, 1]
 
-        config = NeuralNetConfig(num_inputs=feature_data.shape[1], num_nodes_hidden_layers=[8, 4],
-                                 num_outputs=1, learning_rate=0.01, epochs=500)
+        config = NeuralNetConfig(num_inputs=feature_data.shape[1], num_nodes_hidden_layers=[16],
+                                 num_outputs=1, learning_rate=0.01, epochs=800)
 
         self.neural_net_learner = NeuralNetLearner(config)
 
@@ -93,7 +93,7 @@ class Runner:
         cost = self.neural_net_learner.calculate_rounded_cost(predictions, labels_data)
         print("Final Rounded Cost: ", cost)
 
-        self.print_error_stats(data, labels_data, predictions, rounded_predictions)
+        # self.print_error_stats(data, labels_data, predictions, rounded_predictions)
 
     @staticmethod
     def print_error_stats(data, labels_data, predictions, rounded_predictions):
