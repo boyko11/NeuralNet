@@ -1,9 +1,13 @@
 Neural Net from scratch with Python and Numpy
 
-Dataset:
-Wisconsin Breast Cancer Dataset:
-
+## Dataset:
+Wisconsin Breast Cancer:  
 https://archive.ics.uci.edu/ml/datasets/Breast+Cancer+Wisconsin+(Diagnostic)
+
+## Purpose
+Gain familiarity with the algorithm by developing it from scratch.
+Hence, best ML practices such as train/test/cross-validation splits 
+are NOT prioritized.
 
 ## Neural Net config
 Fancy: for 30-dimensional input vector, 4 hidden layers with 16, 8, 4, 2 nodes respectively
